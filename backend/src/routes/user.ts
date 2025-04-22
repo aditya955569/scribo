@@ -13,7 +13,6 @@ export const userRouter = new Hono<{
 
 userRouter.post('/signup', async (c) => {
 	const body = await c.req.json();
-	console.log(body)
 	const { success } = signupInput.safeParse(body);
 	console.log(success)
 	if(!success){
@@ -38,9 +37,18 @@ userRouter.post('/signup', async (c) => {
     const jwt = await sign({id: user.id}, c.env.JWT_SECRET)
     return c.json({jwt});
 	
-  } catch(e) {
-		c.status(411);
-		return c.text("Invalid")
+  } catch(e:any) {
+		if (e.code === 'P2002' && e.meta?.target?.includes('email')) {
+			c.status(400);
+			return c.json({
+				error: "Email already exists. Please use a different one."
+			});
+		}
+		console.log(e);
+		c.status(500);
+		return c.json({
+			error: "Something went wrong. Please try again later."
+		});
 	}
 })
 
